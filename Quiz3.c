@@ -1,28 +1,28 @@
+#include <stdio.h>
 #include <omp.h>
-#include <iostream>
-#include <vector>
 
 int main() {
-    int n = 10; // Size of the array
-    std::vector<int> arr(n);
+    int n = 10;
+    int arr[n];
 
     // Parallel for loop to fill the array with squares of the index
     #pragma omp parallel for
     for (int i = 0; i < n; i++) {
         arr[i] = i * i;
-        // Print the thread number and the result for demonstration purposes
+
+        // Print the thread number and the result for demonstration
         #pragma omp critical
         {
-            std::cout << "Thread " << omp_get_thread_num() << " computed arr[" << i << "] = " << arr[i] << std::endl;
+            printf("Thread %d computed arr[%d] = %d\n", omp_get_thread_num(), i, arr[i]);
         }
     }
 
     // Display the final array
-    std::cout << "Final array: ";
+    printf("Final array: ");
     for (int i = 0; i < n; i++) {
-        std::cout << arr[i] << " ";
+        printf("%d ", arr[i]);
     }
-    std::cout << std::endl;
+    printf("\n");
 
     return 0;
 }
