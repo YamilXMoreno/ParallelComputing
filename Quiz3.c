@@ -2,27 +2,23 @@
 #include <omp.h>
 
 int main() {
-    int n = 10;
+    int n = 100;                // Size of the array
     int arr[n];
+    int sum = 0;
 
-    // Parallel for loop to fill the array with squares of the index
-    #pragma omp parallel for
+    // Initialize the array with some values
     for (int i = 0; i < n; i++) {
-        arr[i] = i * i;
-
-        // Print the thread number and the result for demonstration
-        #pragma omp critical
-        {
-            printf("Thread %d computed arr[%d] = %d\n", omp_get_thread_num(), i, arr[i]);
-        }
+        arr[i] = i + 1;         // Example: arr = [1, 2, 3, ..., n]
     }
 
-    // Display the final array
-    printf("Final array: ");
+    // Calculate the sum of the array in parallel
+    #pragma omp parallel for reduction(+:sum)
     for (int i = 0; i < n; i++) {
-        printf("%d ", arr[i]);
+        sum += arr[i];
     }
-    printf("\n");
+
+    printf("Sum of array elements: %d\n", sum);
 
     return 0;
 }
+
