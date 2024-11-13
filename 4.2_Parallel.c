@@ -1,54 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <math.h>
 
-#define NUM_BINS 10
-#define NUM_THREADS 4
-#define DATA_SIZE 1000
-
-int histogram[NUM_BINS];
-int data[DATA_SIZE];
+long long number_in_circle = 0;
+long long number_of_tosses;
+int num_threads;
 pthread_mutex_t mutex;
 
-void* compute_histogram(void* rank) {
-    long my_rank = (long)rank;
-    int local_hist[NUM_BINS] = {0};
-    int start = my_rank * DATA_SIZE / NUM_THREADS;
-    int end = (my_rank + 1) * DATA_SIZE / NUM_THREADS;
+void* monte_carlo(void* rank) {
+    long long local_in_circle = 0;
+    unsigned int seed = (unsigned int)(long)rank;
+    long long tosses_per_thread = number_of_tosses / num_threads;
 
-    for (int i = start; i < end; i++) {
-        int bin = data[i] % NUM_BINS;  // For simplicity, assuming data[i] is in a range divisible by NUM_BINS
-        local_hist[bin]++;
+    for (long long toss = 0; toss < tosses_per_thread; toss++) {
+        double x = 2 * ((double)rand_r(&seed) / RAND_MAX) - 1;
+        double y = 2 * ((double)rand_r(&seed) / RAND_MAX) - 1;
+        if (x * x + y * y <= 1) local_in_circle++;
     }
 
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < NUM_BINS; i++) {
-        histogram[i] += local_hist[i];
-    }
+    number_in_circle += local_in_circle;
     pthread_mutex_unlock(&mutex);
 
     return NULL;
 }
 
 int main() {
-    pthread_t threads[NUM_THREADS];
+    printf("Enter number of tosses: ");
+    scanf("%lld", &number_of_tosses);
+    printf("Enter number of threads: ");
+    scanf("%d", &num_threads);
+
+    pthread_t threads[num_threads];
     pthread_mutex_init(&mutex, NULL);
 
-    for (int i = 0; i < DATA_SIZE; i++) {
-        data[i] = rand() % 100;  // Random data
+    for (long thread = 0; thread < num_threads; thread++) {
+        pthread_create(&threads[thread], NULL, monte_carlo, (void*)thread);
     }
-
-    for (long thread = 0; thread < NUM_THREADS; thread++) {
-        pthread_create(&threads[thread], NULL, compute_histogram, (void*)thread);
-    }
-    for (int thread = 0; thread < NUM_THREADS; thread++) {
+    for (int thread = 0; thread < num_threads; thread++) {
         pthread_join(threads[thread], NULL);
     }
 
-    printf("Histogram:\n");
-    for (int i = 0; i < NUM_BINS; i++) {
-        printf("Bin %d: %d\n", i, histogram[i]);
-    }
+    double pi_estimate = 4 * number_in_circle / ((double)number_of_tosses);
+    printf("Estimated Pi = %f\n", pi_estimate);
 
     pthread_mutex_destroy(&mutex);
     return 0;
