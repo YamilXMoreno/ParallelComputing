@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>  // Include this for usleep
 
 pthread_mutex_t mutex;
 pthread_cond_t read_cond, write_cond;
@@ -25,6 +26,7 @@ void* reader(void* rank) {
             pthread_cond_signal(&write_cond);
         }
         pthread_mutex_unlock(&mutex);
+        
         usleep(100000);  // Small delay
     }
     return NULL;
@@ -45,6 +47,7 @@ void* writer(void* rank) {
         pthread_cond_broadcast(&read_cond);
         pthread_cond_signal(&write_cond);
         pthread_mutex_unlock(&mutex);
+        
         usleep(150000);  // Small delay
     }
     return NULL;
